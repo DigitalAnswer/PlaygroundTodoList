@@ -1,4 +1,4 @@
-package Controllers
+package controllers
 
 import (
 	"net/http"
@@ -18,6 +18,11 @@ func NewRouter() *Router {
 	return &Router{
 		Router: mux.NewRouter(),
 	}
+}
+
+// Use middleware
+func (r *Router) Use(middleware ...alice.Constructor) {
+	r.middleware = r.middleware.Append(middleware...)
 }
 
 // AddController to router

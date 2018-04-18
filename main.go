@@ -4,14 +4,16 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/DigitalAnswer/PlaygroundTodoList/Controllers"
+	"github.com/DigitalAnswer/PlaygroundTodoList/controllers"
+	"github.com/DigitalAnswer/PlaygroundTodoList/middleware"
+	"github.com/DigitalAnswer/PlaygroundTodoList/services"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
 
-	db, err := sql.Open("mysql", "root:admin@tcp(localhost:6603)/TodoDev")
+	db, err := sql.Open("mysql", dbDevSettings.dataSource())
 	if err != nil {
 		panic(err.Error())
 	}
@@ -23,16 +25,19 @@ func main() {
 		panic(err.Error())
 	}
 
-	router := setupRoutes()
+	router := setupRoutes(db)
 	http.ListenAndServe(":8080", router)
 }
 
-func setupRoutes() *Controllers.Router {
+func setupRoutes(db *sql.DB) *controllers.Router {
 
-	router := Controllers.NewRouter()
+	router := controllers.NewRouter()
+
+	router.Use(middleware.NewAuthMiddleware("toto"))
 
 	// UserController
-	userC, _ := Controllers.NewUserController()
+	userS := services.NewUserService(db)
+	userC, _ := controllers.NewUserController(userS)
 	router.AddController(userC)
 
 	return router
