@@ -3,6 +3,9 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 
 	"github.com/DigitalAnswer/PlaygroundTodoList/services"
 
@@ -33,7 +36,29 @@ func (c UserController) Mount(r *Router) {
 
 // Signin func
 func (c *UserController) Signin(w http.ResponseWriter, r *http.Request) {
+	req := &models.User{}
 
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		log.Error().Err(err).Msg("Unable to decode")
+		FailureFromError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	r.Body.Close()
+	user, err := c.userService.Authenticate(req)
+	if err != nil {
+		log.Error().Err(err).Msg("Cannot be auth")
+		FailureFromError(w, http.StatusForbidden, err)
+		return
+	}
+
+	jwtToken, _ := c.createJWT()
+	jsonResponse := map[string]interface{}{
+		"user":  user,
+		"token": jwtToken,
+	}
+
+	JSON(w, http.StatusOK, jsonResponse)
 }
 
 // Signout func
@@ -46,9 +71,7 @@ func (c *UserController) Signup(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		log.Error().Err(err).Msg("Unable to decode")
-
 		FailureFromError(w, http.StatusInternalServerError, err)
-
 		return
 	}
 
@@ -61,4 +84,16 @@ func (c *UserController) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	JSON(w, http.StatusCreated, user)
+}
+
+func (c *UserController) createJWT() (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"foo": "bar",
+		"nbf": time.Now().Unix(),
+	})
+
+	mySigningKey := []byte("toto")
+	tokenString, err := token.SignedString(mySigningKey)
+
+	return tokenString, err
 }
