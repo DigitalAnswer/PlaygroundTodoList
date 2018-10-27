@@ -40,5 +40,10 @@ func setupRoutes(db *sql.DB) *controllers.Router {
 	userC, _ := controllers.NewUserController(userS)
 	router.AddController(userC)
 
+	// ListController
+	listS := services.NewListService(db)
+	listC, _ := controllers.NewListController(listS)
+	router.AddController(listC)
+
 	return router
 }

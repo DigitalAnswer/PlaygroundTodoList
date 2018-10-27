@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-
-	"github.com/DigitalAnswer/PlaygroundTodoList/services"
-
 	"github.com/rs/zerolog/log"
 
+	"github.com/DigitalAnswer/PlaygroundTodoList/helpers"
 	"github.com/DigitalAnswer/PlaygroundTodoList/models"
+	"github.com/DigitalAnswer/PlaygroundTodoList/services"
 )
 
 // UserController struct
@@ -40,7 +39,7 @@ func (c *UserController) Signin(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		log.Error().Err(err).Msg("Unable to decode")
-		FailureFromError(w, http.StatusInternalServerError, err)
+		helpers.FailureFromError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -48,11 +47,11 @@ func (c *UserController) Signin(w http.ResponseWriter, r *http.Request) {
 	user, err := c.userService.Authenticate(req)
 	if err != nil {
 		log.Error().Err(err).Msg("Cannot be auth")
-		FailureFromError(w, http.StatusForbidden, err)
+		helpers.FailureFromError(w, http.StatusForbidden, err)
 		return
 	}
 
-	jwtToken, _ := c.createJWT()
+	jwtToken, _ := c.createJWT(user)
 	jsonResponse := map[string]interface{}{
 		"user":  user,
 		"token": jwtToken,
@@ -71,7 +70,7 @@ func (c *UserController) Signup(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		log.Error().Err(err).Msg("Unable to decode")
-		FailureFromError(w, http.StatusInternalServerError, err)
+		helpers.FailureFromError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -79,17 +78,18 @@ func (c *UserController) Signup(w http.ResponseWriter, r *http.Request) {
 	user, err := c.userService.Create(req)
 	if err != nil {
 		log.Error().Err(err).Msg("Cannot create new user")
-		FailureFromError(w, http.StatusInternalServerError, err)
+		helpers.FailureFromError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	JSON(w, http.StatusCreated, user)
 }
 
-func (c *UserController) createJWT() (string, error) {
+func (c *UserController) createJWT(user *models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"foo": "bar",
-		"nbf": time.Now().Unix(),
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+		"iat":     time.Now().Unix(),
 	})
 
 	mySigningKey := []byte("toto")

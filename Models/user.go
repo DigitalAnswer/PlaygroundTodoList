@@ -6,7 +6,7 @@ import (
 
 // User struct
 type User struct {
-	ID        string `json:"id"`
+	ID        int64  `json:"id"`
 	UserName  string `json:"userName"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
@@ -15,9 +15,10 @@ type User struct {
 	IsDisable bool   `json:"-"`
 }
 
+// MarshalJSON for User
 func (usr User) MarshalJSON() ([]byte, error) {
 	var tmp struct {
-		ID        string `json:"id"`
+		ID        int64  `json:"id"`
 		UserName  string `json:"username"`
 		FirstName string `json:"firstName"`
 		LastName  string `json:"lastName"`

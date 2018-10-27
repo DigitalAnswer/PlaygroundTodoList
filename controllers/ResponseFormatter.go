@@ -3,6 +3,8 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/DigitalAnswer/PlaygroundTodoList/helpers"
 )
 
 // JSON response
@@ -12,6 +14,6 @@ func JSON(w http.ResponseWriter, code int, body interface{}) {
 	w.WriteHeader(code)
 
 	if err := json.NewEncoder(w).Encode(body); err != nil {
-		FailureFromError(w, http.StatusInternalServerError, err)
+		helpers.FailureFromError(w, http.StatusInternalServerError, err)
 	}
 }

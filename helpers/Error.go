@@ -1,4 +1,4 @@
-package controllers
+package helpers
 
 import (
 	"encoding/json"
@@ -32,6 +32,7 @@ func (e ErrorMessage) GetMessage() string {
 	return e.Message
 }
 
+// ErrorResponse struct
 type ErrorResponse struct {
 	Error ErrorMessage `json:"error"`
 }

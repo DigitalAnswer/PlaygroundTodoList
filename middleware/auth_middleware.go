@@ -1,12 +1,12 @@
 package middleware
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
-
 	"github.com/DigitalAnswer/PlaygroundTodoList/helpers"
+	"github.com/dgrijalva/jwt-go"
 )
 
 // NewAuthMiddleware func
@@ -26,8 +26,14 @@ func NewAuthMiddleware(secret string) func(http.Handler) http.Handler {
 
 			tokenString := r.Header.Get("token")
 			if len(tokenString) > 0 {
-				parseJWT(tokenString)
+				if err := parseJWT(tokenString); err != nil {
+					helpers.FailureFromError(w, http.StatusUnauthorized, err)
+				}
+			} else {
+				helpers.FailureFromError(w, http.StatusUnauthorized, errors.New("Missing token"))
+				return
 			}
+
 			// Auth
 			fmt.Printf("%s%s\n", r.Host, r.URL.String())
 			next.ServeHTTP(w, r)
@@ -35,19 +41,24 @@ func NewAuthMiddleware(secret string) func(http.Handler) http.Handler {
 	}
 }
 
-func parseJWT(tokenString string) {
+func parseJWT(tokenString string) error {
 
 	type MyCustomClaims struct {
-		Foo string `json:"foo"`
+		UserID       int64 `json:"user_id"`
+		ExpDate      int64 `json:"exp"`
+		CreationDate int64 `json:"iat"`
 		jwt.StandardClaims
 	}
 
 	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte("toto"), nil
 	})
+
 	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
-		fmt.Printf("%v %v\n", claims.Foo, claims.StandardClaims.ExpiresAt)
-	} else {
-		fmt.Println(err)
+		fmt.Printf("userId: %v expiresAt: %v\n", claims.UserID, claims.ExpDate)
+		return nil
 	}
+
+	fmt.Println(err)
+	return err
 }
