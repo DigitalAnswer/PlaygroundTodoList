@@ -43,13 +43,9 @@ func (c *ListController) Add(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
-	tokenString := r.Header.Get("token")
-	claim, err := helpers.ParseJWT(tokenString)
-	if err != nil {
-		log.Error().Err(err).Msg("Cannot parse jwt token")
-	}
+	userID := r.Context().Value(helpers.KeyPrincipalID).(int64)
 
-	list, err := c.listService.Create(claim.UserID, req)
+	list, err := c.listService.Create(userID, req)
 	if err != nil {
 		log.Error().Err(err).Msg("Cannot add a list")
 		helpers.FailureFromError(w, http.StatusForbidden, err)
@@ -65,13 +61,10 @@ func (c *ListController) Add(w http.ResponseWriter, r *http.Request) {
 
 // GetAllList func
 func (c *ListController) GetAllList(w http.ResponseWriter, r *http.Request) {
-	tokenString := r.Header.Get("token")
-	claim, err := helpers.ParseJWT(tokenString)
-	if err != nil {
-		log.Error().Err(err).Msg("Cannot parse jwt token")
-	}
 
-	allList, err := c.listService.GetAllList(claim.UserID)
+	userID := r.Context().Value(helpers.KeyPrincipalID).(int64)
+
+	allList, err := c.listService.GetAllList(userID)
 	if err != nil {
 		log.Error().Err(err).Msg("Cannot get all list")
 		helpers.FailureFromError(w, http.StatusForbidden, err)
@@ -100,13 +93,8 @@ func (c *ListController) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body.Close()
 
-	tokenString := r.Header.Get("token")
-	claim, err := helpers.ParseJWT(tokenString)
-	if err != nil {
-		log.Error().Err(err).Msg("Cannot parse jwt token")
-	}
-
-	err = c.listService.Delete(claim.UserID, req.ID)
+	userID := r.Context().Value(helpers.KeyPrincipalID).(int64)
+	err := c.listService.Delete(userID, req.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("Cannot delete list")
 		helpers.FailureFromError(w, http.StatusForbidden, err)
@@ -121,6 +109,8 @@ func (c *ListController) Delete(w http.ResponseWriter, r *http.Request) {
 // Get func
 func (c *ListController) Get(w http.ResponseWriter, r *http.Request) {
 
+	userID := r.Context().Value(helpers.KeyPrincipalID).(int64)
+
 	listIDString := mux.Vars(r)["id"]
 	listID, err := strconv.ParseInt(listIDString, 10, 64)
 	if err != nil {
@@ -128,16 +118,8 @@ func (c *ListController) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenString := r.Header.Get("token")
-	claim, err := helpers.ParseJWT(tokenString)
-	if err != nil {
-		log.Error().Err(err).Msg("Cannot parse jwt token")
-		helpers.FailureFromError(w, http.StatusForbidden, err)
-		return
-	}
-
 	list := &models.List{}
-	list, err = c.listService.Get(claim.UserID, listID)
+	list, err = c.listService.Get(userID, listID)
 	if err != nil {
 		log.Error().Err(err).Msg("Cannot get list by id")
 		helpers.FailureFromError(w, http.StatusForbidden, err)

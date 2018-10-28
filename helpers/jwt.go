@@ -8,6 +8,12 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+type JWTKey int
+
+const (
+	KeyPrincipalID JWTKey = iota
+)
+
 // MyCustomClaims struct
 type MyCustomClaims struct {
 	UserID       int64 `json:"user_id"`
