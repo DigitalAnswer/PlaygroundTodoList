@@ -6,5 +6,5 @@ type List struct {
 	Name        string     `json:"name"`
 	Description NullString `json:"description"`
 	Tasks       []Task     `json:"tasks"`
-	Order       int        `json:"order"`
+	ListIndex   int        `json:"order"`
 }
